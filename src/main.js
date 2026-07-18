@@ -5,7 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { SkeletonView } from './skeleton.js';
 import { PosePanel } from './panel.js';
 import { Timeline } from './timeline.js';
-import { isKeyJoint, applyOffsets, makeWalkAnimation } from './presets.js';
+import { isKeyJoint, applyOffsets, makeWalkAnimation, makeSitStandAnimation } from './presets.js';
 
 const viewport = document.getElementById('viewport');
 
@@ -165,15 +165,17 @@ function init(gltf) {
     fileInput.value = '';
   });
 
-  // --- walk preset ---
-  function loadWalkPreset() {
+  // --- presets ---
+  function loadPreset(make) {
     skeletonView.setSelected(null);
     gizmo.detach();
     panel.setBone(null);
-    timeline.fromJSON(makeWalkAnimation(bones, bindPose, rootBone));
+    timeline.fromJSON(make(bones, bindPose, rootBone));
     timeline.play();
   }
+  const loadWalkPreset = () => loadPreset(makeWalkAnimation);
   document.getElementById('preset-walk').addEventListener('click', loadWalkPreset);
+  document.getElementById('preset-sit').addEventListener('click', () => loadPreset(makeSitStandAnimation));
 
   // first run: start out walking instead of standing still
   if (timeline.keyframes.length === 0) loadWalkPreset();
