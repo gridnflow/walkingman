@@ -109,7 +109,8 @@ export class Timeline {
     const n = this.keyframes.length;
     if (n === 0) return;
     if (n === 1) return this._applyPose(this.keyframes[0].bones);
-    const i = Math.min(Math.floor(t / this.segDur), (this.loop ? n : n - 1) - 1);
+    const maxI = (this.loop ? n : n - 1) - 1;
+    const i = THREE.MathUtils.clamp(Math.floor(t / this.segDur) || 0, 0, maxI);
     const alpha = THREE.MathUtils.clamp((t - i * this.segDur) / this.segDur, 0, 1);
     const a = this.keyframes[i].bones;
     const b = this.keyframes[(i + 1) % n].bones;

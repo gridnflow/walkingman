@@ -182,6 +182,11 @@ function init(gltf) {
   window.__wm = {
     bones, bindPose, rootBone, camera, orbit, timeline, size,
     applyOffsets: (off, dy) => applyOffsets(bones, bindPose, off || {}, dy || 0),
+    testWalk(opts) {
+      timeline.fromJSON(makeWalkAnimation(bones, bindPose, rootBone, opts));
+      timeline.pause();
+      timeline._applyAt(0);
+    },
     setView(name) {
       const d = size.y * 2.2;
       const y = size.y * 0.55;
@@ -214,7 +219,8 @@ function init(gltf) {
   // --- render loop ---
   let last = performance.now();
   renderer.setAnimationLoop((now) => {
-    const dt = Math.min((now - last) / 1000, 0.1);
+    // rAF timestamps can lag the performance.now() taken at registration — clamp at 0
+    const dt = Math.min(Math.max((now - last) / 1000, 0), 0.1);
     last = now;
     timeline.update(dt);
     orbit.update();
