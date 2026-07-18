@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { makeWalkAnimation } from './presets.js';
 
 const STORAGE_KEY = 'walkingman.animation.v1';
 
@@ -30,19 +29,17 @@ const _qb = new THREE.Quaternion();
 const _pa = new THREE.Vector3();
 const _pb = new THREE.Vector3();
 
-let fallbackWalk = null; // generated from the rig if nothing has been authored yet
-
 function loadAnimation() {
-  anim = null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const data = JSON.parse(raw);
-      if (data.keyframes && data.keyframes.length >= 2) anim = data;
-    }
-  } catch { /* corrupted storage — fall through to the generated walk */ }
-  if (!anim) anim = fallbackWalk;
+    if (!raw) return (anim = null);
+    const data = JSON.parse(raw);
+    anim = data.keyframes && data.keyframes.length >= 2 ? data : null;
+  } catch {
+    anim = null;
+  }
 }
+loadAnimation();
 window.addEventListener('storage', loadAnimation); // live-updates while editing
 
 function applyAt(t) {
@@ -108,14 +105,6 @@ new GLTFLoader().load(
       }
     });
 
-    // never stand idle: if nothing has been authored yet, walk with the generated cycle
-    const bindPose = new Map();
-    for (const b of bones) {
-      bindPose.set(b.name, { q: b.quaternion.clone(), p: b.position.clone() });
-    }
-    fallbackWalk = makeWalkAnimation(bones, bindPose, rootBone);
-    loadAnimation();
-
     camera.position.set(0, 0, 10);
     camera.lookAt(0, 0, 0);
     fitCamera();
@@ -125,7 +114,7 @@ new GLTFLoader().load(
     let last = performance.now();
     let walkX = camera.left - modelHeight; // start just off the left edge
     renderer.setAnimationLoop((now) => {
-      const dt = Math.min(Math.max((now - last) / 1000, 0), 0.1);
+      const dt = Math.min((now - last) / 1000, 0.1);
       last = now;
 
       applyAt(now / 1000);

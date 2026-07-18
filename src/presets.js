@@ -83,9 +83,7 @@ function mirrorPhase(p) {
   };
 }
 
-export function makeWalkAnimation(bones, bindPose, rootBone, opts = {}) {
-  // armTwist -60° keeps the palms toward the body; tuned visually against this rig
-  const { armTwist = -60, wristRelax = 8 } = opts;
+export function makeWalkAnimation(bones, bindPose, rootBone) {
   const get = (name) => bones.find((b) => short(b) === name);
   const j = {
     hips: get('Hips'), spine: get('Spine1'),
@@ -93,7 +91,6 @@ export function makeWalkAnimation(bones, bindPose, rootBone, opts = {}) {
     rUp: get('RightUpLeg'), rSh: get('RightLeg'), rFt: get('RightFoot'), rToe: get('RightToeBase'),
     lArm: get('LeftArm'), lFore: get('LeftForeArm'), lHand: get('LeftHand'),
     rArm: get('RightArm'), rFore: get('RightForeArm'), rHand: get('RightHand'),
-    lIdx: get('LeftHandIndex1'), rIdx: get('RightHandIndex1'),
   };
   const X = new THREE.Vector3(1, 0, 0);
   const Y = new THREE.Vector3(0, 1, 0);
@@ -124,21 +121,11 @@ export function makeWalkAnimation(bones, bindPose, rootBone, opts = {}) {
     rotateWorld(j.rSh, X, -(p.Rshin - p.Rthigh));
     rotateWorld(j.rFt, X, -(p.Rfoot - p.Rshin));
 
-    // arms: aim straight down, then swing in the sagittal plane (bind pose is hands-on-hips).
-    // After aiming, twist each bone about its own axis so the palms face the body,
-    // and let the hand continue the forearm line with a slight relax bend.
-    for (const [arm, fore, hand, idx, swing, twist] of [
-      [j.lArm, j.lFore, j.lHand, j.lIdx, p.Larm, armTwist],
-      [j.rArm, j.rFore, j.rHand, j.rIdx, p.Rarm, -armTwist],
-    ]) {
-      const upper = armDir(swing);
-      const lower = armDir(swing + p.elbow);
-      aimWorld(arm, fore, upper);
-      if (twist) rotateWorld(arm, upper, twist);
-      aimWorld(fore, hand, lower);
-      if (twist) rotateWorld(fore, lower, twist * 0.5);
-      if (idx) aimWorld(hand, idx, armDir(swing + p.elbow + wristRelax));
-    }
+    // arms: aim straight down, then swing in the sagittal plane (bind pose is hands-on-hips)
+    aimWorld(j.lArm, j.lFore, armDir(p.Larm));
+    aimWorld(j.lFore, j.lHand, armDir(p.Larm + p.elbow));
+    aimWorld(j.rArm, j.rFore, armDir(p.Rarm));
+    aimWorld(j.rFore, j.rHand, armDir(p.Rarm + p.elbow));
 
     // vertical bounce
     j.hips.position.y += p.dy * bounce;
