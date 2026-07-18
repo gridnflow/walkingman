@@ -116,16 +116,27 @@ export function makeWalkAnimation(bones, bindPose, rootBone) {
     // legs: forward swing is a negative rotation about world X (empirically probed)
     rotateWorld(j.lUp, X, -p.Lthigh);
     rotateWorld(j.lSh, X, -(p.Lshin - p.Lthigh));
-    rotateWorld(j.lFt, X, -(p.Lfoot - p.Lshin));
     rotateWorld(j.rUp, X, -p.Rthigh);
     rotateWorld(j.rSh, X, -(p.Rshin - p.Rthigh));
-    rotateWorld(j.rFt, X, -(p.Rfoot - p.Rshin));
+
+    // fixed ankle pose, hand-tuned in the editor sliders (local Euler, degrees);
+    // replaces the per-phase foot pitch — feet ride along with the shin
+    j.lFt.rotation.set(D(80), D(-41), D(71));
+    j.rFt.rotation.set(D(80), D(-45), D(84));
+    // the fixed ankle pose reads duck-footed — pull the toes inward about world Y
+    const toeIn = 16;
+    rotateWorld(j.lFt, Y, -toeIn);
+    rotateWorld(j.rFt, Y, toeIn);
 
     // arms: aim straight down, then swing in the sagittal plane (bind pose is hands-on-hips)
     aimWorld(j.lArm, j.lFore, armDir(p.Larm));
     aimWorld(j.lFore, j.lHand, armDir(p.Larm + p.elbow));
     aimWorld(j.rArm, j.rFore, armDir(p.Rarm));
     aimWorld(j.rFore, j.rHand, armDir(p.Rarm + p.elbow));
+
+    // fixed wrist pose, hand-tuned in the editor sliders (local Euler, degrees)
+    j.lHand.rotation.set(D(-20), D(20), D(11));
+    j.rHand.rotation.set(D(0), D(-15), D(12));
 
     // vertical bounce
     j.hips.position.y += p.dy * bounce;
